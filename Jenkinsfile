@@ -3,8 +3,12 @@ pipeline {
  tools {
     maven 'Maven'
  }
-    Stages {
-        Stage ('build App') {
+
+    environment {
+        DOCKER_CMD= 'docker run -d -p 8080:8080 dukaegbu/dbase-repo:jma-3.0 '
+    }
+    stages {
+        stage ('Build App') {
             steps {
                 script {
                     echo "Building the jar file"
@@ -12,27 +16,34 @@ pipeline {
                 }
             }
          }
-        Stage ('test') {
+
+        stage ('test') {
             steps{
+                script {
                 echo "Testing application"
-             sh 'mvn test'
+                sh 'mvn test'
+                }
              }
         }
-        Stage ('Build Image') {
+
+        stage ('Build Image') {
             steps {
+                script{
                 echo "Building Docker Image"
                 withCredentials([userPassword(credentialsId:'docker-credentials', usernameVariable:'USER',passwordvariable:'PASS')]){
-                    sh "docker echo $PASS login -u $USER --password-stdin"
-                    sh 'docker build .-t dukaegbu/dbase-repo:jma-3.0'
+                    sh "echo $PASS login -u $USER --password-stdin"
+                    sh 'docker build . -t dukaegbu/dbase-repo:jma-3.0'
                     sh 'docker push dukaegbu/dbase-repo:jma-3.0'
+                    }
                 }
             }
         }
-        Stage ('Deploy to Dev Env') {
+        stage ('Deploy to Dev Env') {
             steps {
-                def dockercmd = 'docker run -d -p 8080:8080 dukaegbu/dbase-repo:jma-3.0'
+                
                 sshagent(['dev-key']) {
-                    sh "ssh -o StrictHostKeyChecking=no ubuntu3.139.62.70 $dockercmd"
+                    sh "ssh -o StrictHostKeyChecking=no ubuntu3.139.62.70 dukaegbu/dbase-repo:jma-3.0"
+                    sh "ssh -o StrictHostKeyChecking=no ubuntu3.139.62.70 $DOCKER_CMD"
                 }
             }
         }
