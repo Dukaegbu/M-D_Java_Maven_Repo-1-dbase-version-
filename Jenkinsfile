@@ -30,9 +30,9 @@ pipeline {
             steps {
                 script{
                 echo "Building Docker Image"
-                withCredentials([userPassword(credentialsId:'docker-credentials', usernameVariable:'USER',passwordvariable:'PASS')]){
-                    sh "echo $PASS login -u $USER --password-stdin"
-                    sh 'docker build . -t dukaegbu/dbase-repo:jma-3.0'
+                withCredentials([userPassword(credentialsId:'docker-credentials', usernameVariable:'USER',passwordvariable:'PASS')]) {
+                    sh "docker login -u $USER -p $PASS"
+                    sh 'docker build -t dukaegbu/dbase-repo:jma-3.0 .'
                     sh 'docker push dukaegbu/dbase-repo:jma-3.0'
                     }
                 }
@@ -42,8 +42,8 @@ pipeline {
             steps {
                 
                 sshagent(['dev-key']) {
-                    sh "ssh -o StrictHostKeyChecking=no ubuntu3.139.62.70 dukaegbu/dbase-repo:jma-3.0"
-                    sh "ssh -o StrictHostKeyChecking=no ubuntu3.139.62.70 $DOCKER_CMD"
+                    sh "ssh -o StrictHostKeyChecking=no ubuntu@3.139.62.70 dukaegbu/dbase-repo:jma-3.0"
+                    sh "ssh -o StrictHostKeyChecking=no ubuntu@3.139.62.70 $DOCKER_CMD"
                 }
             }
         }
